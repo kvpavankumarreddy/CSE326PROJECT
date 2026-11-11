@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DermaCare Skincare & Acne Treatment</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'sans-serif'] },
+          colors: { 
+            medical: { 50: '#f0fdfa', 100: '#ccfbf1', 500: '#14b8a6', 600: '#0d9488', 900: '#134e4a' }
+          }
+        }
+      }
+    };
+  </script>
+</head>
+<body class="font-sans text-gray-800 bg-gray-50 min-h-screen flex flex-col" onload="initApp()">
+
+  <!-- TERMS & CONDITIONS MODAL -->
+  <div id="tcModal" class="hidden fixed inset-0 z-[100] bg-black bg-opacity-60 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl p-8 max-w-lg w-full shadow-2xl relative">
+      <h3 class="text-2xl font-bold mb-4 text-medical-900">Terms & Conditions</h3>
+      <div class="h-48 overflow-y-auto text-sm text-gray-600 space-y-4 mb-6 pr-2">
+        <p><strong>1. Medical Disclaimer:</strong> The information provided on DermaCare is for educational purposes only and is not a substitute for professional medical advice, diagnosis, or treatment.</p>
+        <p><strong>2. Account Security:</strong> You are responsible for maintaining the confidentiality of your login code and phone number associated with your account.</p>
+        <p><strong>3. Consultations:</strong> Booking a consultation does not guarantee a specific prescription. Our dermatologists operate under strict medical guidelines.</p>
+        <p><strong>4. Data Privacy:</strong> Your photos and medical data are stored securely and comply with HIPAA regulations. We do not sell your personal data to third parties.</p>
+      </div>
+      <button onclick="closeTC()" class="w-full bg-gray-900 text-white py-3 rounded-lg hover:bg-gray-800 transition font-bold">I Agree & Close</button>
+    </div>
+  </div>
+
+  <!-- LOGIN INTERFACE -->
+  <section id="loginView" class="min-h-screen flex items-center justify-center bg-gray-900 relative" style="background-image: url('https://images.unsplash.com/photo-1629909613654-286377c37b09?auto=format&fit=crop&w=2000&q=80'); background-size: cover; background-position: center;">
+    <!-- Dark Overlay -->
+    <div class="absolute inset-0 bg-medical-900/60 backdrop-blur-sm"></div>
+
+    <!-- Login Card -->
+    <div class="bg-white/95 p-8 sm:p-10 rounded-3xl shadow-2xl w-full max-w-md relative z-10 border border-white/20">
+      <div class="text-center mb-8">
+        <h1 class="text-4xl font-bold text-medical-600 mb-2">DermaCare.</h1>
+        <h2 class="text-xl font-medium text-gray-800">Welcome Back</h2>
+        <p class="text-sm text-gray-500 mt-2">Log in to access your skincare routine.</p>
+      </div>
+
+      <!-- Step 1: Request Code -->
+      <form id="requestForm" onsubmit="event.preventDefault(); sendLoginCode();" class="space-y-5">
+        <div>
+          <label class="block text-sm font-medium mb-1 text-gray-700">Full Name</label>
+          <input type="text" id="loginName" required placeholder="e.g. Jane Doe" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-medical-500 outline-none bg-gray-50">
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1 text-gray-700">Phone Number</label>
+          <input type="tel" id="loginPhone" required placeholder="(555) 123-4567" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-medical-500 outline-none bg-gray-50">
+        </div>
+        <button type="submit" class="w-full bg-medical-600 text-white py-3.5 rounded-xl font-bold text-lg hover:bg-medical-900 transition shadow-md">Get Login Code</button>
+      </form>
+
+      <!-- Step 2: Enter Code (Hidden Initially) -->
+      <form id="verifyForm" onsubmit="event.preventDefault(); verifyCode();" class="space-y-5 hidden">
+        <div class="bg-medical-50 p-4 rounded-xl text-center mb-4">
+          <p class="text-sm text-medical-800">A 4-digit code was sent to your phone.</p>
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1 text-gray-700">Enter Code</label>
+          <input type="text" required placeholder="1234" maxlength="4" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-medical-500 outline-none bg-gray-50 text-center text-2xl tracking-widest font-bold">
+        </div>
+        <button type="submit" class="w-full bg-gray-900 text-white py-3.5 rounded-xl font-bold text-lg hover:bg-gray-800 transition shadow-md">Verify & Login</button>
+        <button type="button" onclick="resetLogin()" class="w-full text-sm text-gray-500 hover:text-gray-800 font-medium mt-2">Wrong number? Go back.</button>
+      </form>
+
+      <!-- T&C Link -->
+      <div class="mt-8 text-center border-t pt-6">
+        <button onclick="openTC()" class="text-sm font-medium text-medical-600 hover:text-medical-900 underline">Terms and Conditions</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- MAIN APP WRAPPER (HIDDEN INITIALLY) -->
+  <div id="appContainer" class="hidden flex-col min-h-screen">
+
+    <!-- Navigation -->
+    <nav class="bg-white shadow-md sticky top-0 z-50">
+      <div class="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
+        <h1 class="text-2xl font-bold text-medical-600 cursor-pointer" onclick="navigate('home')">DermaCare.</h1>
+        <!-- Desktop Menu -->
+        <div class="hidden md:flex space-x-6 items-center">
+          <button onclick="navigate('home')" class="hover:text-medical-500 font-medium transition">Home</button>
+          <button onclick="navigate('quiz')" class="hover:text-medical-500 font-medium transition">Skin Quiz</button>
+          <button onclick="navigate('routine')" class="hover:text-medical-500 font-medium transition">My Routine</button>
+          <button onclick="navigate('products')" class="hover:text-medical-500 font-medium transition">Products</button>
+          <button onclick="navigate('library')" class="hover:text-medical-500 font-medium transition">Condition Library</button>
+          <button onclick="navigate('consultation')" class="bg-medical-600 text-white px-4 py-2 rounded-md hover:bg-medical-900 transition shadow-sm">Book Consult</button>
+          <button onclick="logout()" class="text-gray-400 hover:text-red-500 font-medium transition ml-4 border-l pl-4">Logout</button>
+        </div>
+      </div>
+    </nav>
+
+    <!-- MAIN CONTENT AREA -->
+    <main class="flex-grow">
+
+      <!-- HOME INTERFACE -->
+      <section id="home" class="view-section active">
+        <!-- Hero with Background Logo/Image -->
+        <div class="relative bg-gray-900 text-white py-32 text-center" style="background-image: url('https://images.unsplash.com/photo-1556228578-0d85b1a4d571?auto=format&fit=crop&w=2000&q=80'); background-size: cover; background-position: center; background-blend-mode: overlay;">
+          <div class="absolute inset-0 bg-medical-900/70"></div>
+          <div class="relative max-w-3xl mx-auto px-4 z-10">
+            <h2 class="text-5xl font-bold mb-4 drop-shadow-md">Expert Dermatology at Your Fingertips</h2>
+            <p class="text-xl text-medical-50 font-light mb-8">Your journey to clear, healthy skin starts here.</p>
+            <button onclick="navigate('quiz')" class="bg-white text-medical-900 px-8 py-3 rounded-full font-bold text-lg hover:bg-gray-100 transition shadow-lg">Start Free Assessment</button>
+          </div>
+        </div>
+
+        <!-- Doctors Section -->
+        <div class="max-w-6xl mx-auto px-4 py-16">
+          <h3 class="text-3xl font-bold text-center mb-12 text-gray-900">Meet Our Specialists</h3>
+          <div class="grid md:grid-cols-3 gap-8">
+            <!-- Doctor 1 -->
+            <div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 text-center pb-6">
+              <img src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=600&q=80" alt="Dr. Sarah Jenkins" class="w-full h-56 object-cover object-top">
+              <h4 class="text-xl font-bold mt-4 text-medical-900">Dr. Sarah Jenkins</h4>
+              <p class="text-sm font-medium text-medical-600 mb-2">Acne & Rosacea Specialist</p>
+              <p class="text-xs text-gray-500 px-4 mb-4">MD, FAAD. 12+ years experience. Specializes in adult acne and hormonal breakouts.</p>
+              <div class="bg-gray-50 mx-4 py-2 rounded-lg text-sm font-medium text-gray-700">Available: Mon-Wed</div>
+            </div>
+            <!-- Doctor 2 -->
+            <div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 text-center pb-6">
+              <img src="https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&w=600&q=80" alt="Dr. Marcus Chen" class="w-full h-56 object-cover object-top">
+              <h4 class="text-xl font-bold mt-4 text-medical-900">Dr. Marcus Chen</h4>
+              <p class="text-sm font-medium text-medical-600 mb-2">Anti-Aging & Eczema</p>
+              <p class="text-xs text-gray-500 px-4 mb-4">MD, PhD. Focuses on barrier repair, sensitive skin, and preventative aging treatments.</p>
+              <div class="bg-gray-50 mx-4 py-2 rounded-lg text-sm font-medium text-gray-700">Available: Thu-Sat</div>
+            </div>
+            <!-- Doctor 3 -->
+            <div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 text-center pb-6">
+              <img src="https://images.unsplash.com/photo-1594824436998-058d0126a11e?auto=format&fit=crop&w=600&q=80" alt="Dr. Emily Rodriguez" class="w-full h-56 object-cover object-top">
+              <h4 class="text-xl font-bold mt-4 text-medical-900">Dr. Emily Rodriguez</h4>
+              <p class="text-sm font-medium text-medical-600 mb-2">Pigmentation & Melasma</p>
+              <p class="text-xs text-gray-500 px-4 mb-4">DO, FAAD. Expert in chemical peels, laser therapy, and hyperpigmentation.</p>
+              <div class="bg-gray-50 mx-4 py-2 rounded-lg text-sm font-medium text-gray-700">Available: Mon-Fri</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SKIN QUIZ INTERFACE -->
+      <section id="quiz" class="view-section py-12 px-4 max-w-3xl mx-auto">
+        <div class="bg-white rounded-2xl shadow-sm p-8 border border-gray-100">
+          <h3 class="text-3xl font-bold text-center mb-2">Comprehensive Skin Diagnostic</h3>
+          <p class="text-gray-500 text-center mb-8">Answer all questions to get your personalized clinical routine.</p>
+
+          <div id="quizError" class="hidden mb-6 bg-red-50 text-red-600 p-4 rounded-lg border border-red-100 text-sm font-medium text-center">
+            Please answer all questions before continuing.
+          </div>
+
+          <form id="quizForm" class="space-y-6">
+            <div>
+              <label class="block font-medium mb-2">1. How does your skin feel 2 hours after washing?</label>
+              <select id="q1" class="w-full p-3 border rounded-lg bg-gray-50 focus:ring-2 focus:ring-medical-500 outline-none">
+                <option value="" disabled selected>Select an option...</option>
+                <option value="normal">Comfortable, not too dry or oily</option>
+                <option value="dry">Tight and slightly flaky</option>
+                <option value="oily">Shiny and greasy</option>
+                <option value="combo">Oily on the T-zone, dry on the cheeks</option>
+              </select>
+            </div>
+            <div>
+              <label class="block font-medium mb-2">2. Do you experience redness or stinging when trying new products?</label>
+              <select id="q2" class="w-full p-3 border rounded-lg bg-gray-50 focus:ring-2 focus:ring-medical-500 outline-none">
+                <option value="" disabled selected>Select an option...</option>
+                <option value="no">Rarely or never</option>
+                <option value="yes">Yes, very often (Sensitive)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block font-medium mb-2">3. How often do you experience breakouts or acne?</label>
+              <select id="q3" class="w-full p-3 border rounded-lg bg-gray-50 focus:ring-2 focus:ring-medical-500 outline-none">
+                <option value="" disabled selected>Select an option...</option>
+                <option value="rare">Rarely</option>
+                <option value="occasional">Occasionally (Hormonal/Monthly)</option>
+                <option value="frequent">Frequently (Weekly breakouts)</option>
+                <option value="constant">Constantly (Severe cystic acne)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block font-medium mb-2">4. What is your primary skin goal?</label>
+              <select id="q4" class="w-full p-3 border rounded-lg bg-gray-50 focus:ring-2 focus:ring-medical-500 outline-none">
+                <option value="" disabled selected>Select an option...</option>
+                <option value="acne">Clearing acne and blemishes</option>
+                <option value="aging">Anti-aging and reducing wrinkles</option>
+                <option value="pigment">Fading dark spots and hyperpigmentation</option>
+                <option value="hydrate">Deep hydration and barrier repair</option>
+              </select>
+            </div>
+            <div>
+              <label class="block font-medium mb-2">5. What is your daily sun exposure?</label>
+              <select id="q5" class="w-full p-3 border rounded-lg bg-gray-50 focus:ring-2 focus:ring-medical-500 outline-none">
+                <option value="" disabled selected>Select an option...</option>
+                <option value="low">Low (Mostly indoors)</option>
+                <option value="moderate">Moderate (Commuting, some outdoor time)</option>
+                <option value="high">High (Work outdoors or play sports)</option>
+              </select>
+            </div>
+            <button type="button" onclick="calculateSkinType()" class="w-full bg-medical-600 text-white py-4 rounded-lg hover:bg-medical-900 transition font-bold text-lg mt-4">Analyze Skin & Generate Routine</button>
+          </form>
+
+          <div id="quizResult" class="hidden mt-8 p-6 bg-medical-50 rounded-xl text-center border border-medical-100">
+            <p class="text-sm text-medical-600 font-semibold uppercase">Diagnosis Complete</p>
+            <h4 id="skinTypeTitle" class="text-3xl font-bold text-gray-900 my-2">Combination Skin</h4>
+            <p class="text-gray-600 mb-6">Your customized AM/PM routine is ready.</p>
+            <button onclick="navigate('routine')" class="bg-gray-900 text-white px-6 py-2 rounded-full hover:bg-gray-700 transition">View My Routine</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ROUTINE & LIFESTYLE INTERFACE -->
+      <section id="routine" class="view-section py-12 px-4 max-w-6xl mx-auto">
+        <h3 class="text-4xl font-bold mb-8 text-center">Your Customized Plan</h3>
+
+        <div class="grid md:grid-cols-2 gap-8 mb-12">
+          <!-- AM Routine -->
+          <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+            <div class="flex items-center mb-6">
+              <div class="bg-yellow-100 text-yellow-600 p-3 rounded-full mr-4 text-xl">☀️</div>
+              <h4 class="text-2xl font-bold">Morning (AM)</h4>
+            </div>
+            <ul class="space-y-6 relative before:absolute before:inset-y-0 before:left-[15px] before:w-0.5 before:bg-gray-200">
+              <li class="relative pl-12">
+                <span class="absolute left-0 top-1 w-8 h-8 bg-medical-100 border-4 border-medical-500 rounded-full flex items-center justify-center text-xs font-bold text-medical-700">1</span>
+                <strong class="block text-gray-900 text-lg">Cleanser</strong>
+                <span id="am-cleanser" class="text-gray-600">Gentle hydrating foaming cleanser</span>
+              </li>
+              <li class="relative pl-12">
+                <span class="absolute left-0 top-1 w-8 h-8 bg-medical-100 border-4 border-medical-500 rounded-full flex items-center justify-center text-xs font-bold text-medical-700">2</span>
+                <strong class="block text-gray-900 text-lg">Treatment Serum</strong>
+                <span id="am-serum" class="text-gray-600">Vitamin C 15% Antioxidant Serum</span>
+              </li>
+              <li class="relative pl-12">
+                <span class="absolute left-0 top-1 w-8 h-8 bg-medical-100 border-4 border-medical-500 rounded-full flex items-center justify-center text-xs font-bold text-medical-700">3</span>
+                <strong class="block text-gray-900 text-lg">Moisturizer</strong>
+                <span id="am-moist" class="text-gray-600">Lightweight Hyaluronic Acid Gel</span>
+              </li>
+              <li class="relative pl-12">
+                <span class="absolute left-0 top-1 w-8 h-8 bg-medical-100 border-4 border-medical-500 rounded-full flex items-center justify-center text-xs font-bold text-medical-700">4</span>
+                <strong class="block text-gray-900 text-lg">Protection</strong>
+                <span class="text-medical-600 font-semibold">Broad Spectrum SPF 50 (Mandatory)</span>
+              </li>
+            </ul>
+          </div>
+
+          <!-- PM Routine -->
+          <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+            <div class="flex items-center mb-6">
+              <div class="bg-indigo-100 text-indigo-600 p-3 rounded-full mr-4 text-xl">🌙</div>
+              <h4 class="text-2xl font-bold">Evening (PM)</h4>
+            </div>
+            <ul class="space-y-6 relative before:absolute before:inset-y-0 before:left-[15px] before:w-0.5 before:bg-gray-200">
+              <li class="relative pl-12">
+                <span class="absolute left-0 top-1 w-8 h-8 bg-indigo-100 border-4 border-indigo-500 rounded-full flex items-center justify-center text-xs font-bold text-indigo-700">1</span>
+                <strong class="block text-gray-900 text-lg">Double Cleanse</strong>
+                <span id="pm-cleanser" class="text-gray-600">Oil cleanser followed by gel cleanser</span>
+              </li>
+              <li class="relative pl-12">
+                <span class="absolute left-0 top-1 w-8 h-8 bg-indigo-100 border-4 border-indigo-500 rounded-full flex items-center justify-center text-xs font-bold text-indigo-700">2</span>
+                <strong class="block text-gray-900 text-lg">Treatment Serum</strong>
+                <span id="pm-serum" class="text-gray-600">Retinol 0.3% / Salicylic Acid</span>
+              </li>
+              <li class="relative pl-12">
+                <span class="absolute left-0 top-1 w-8 h-8 bg-indigo-100 border-4 border-indigo-500 rounded-full flex items-center justify-center text-xs font-bold text-indigo-700">3</span>
+                <strong class="block text-gray-900 text-lg">Moisturizer</strong>
+                <span id="pm-moist" class="text-gray-600">Ceramide-rich barrier repair cream</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- PRODUCTS INTERFACE -->
+      <section id="products" class="view-section py-12 px-4 max-w-6xl mx-auto">
+        <div class="mb-12 text-center">
+          <h3 class="text-4xl font-bold text-gray-900 mb-4">Dermatologist Recommended Products</h3>
+          <p class="text-gray-600 max-w-2xl mx-auto">Clinically proven, fragrance-free formulas curated by our experts.</p>
+        </div>
+
+        <div class="grid md:grid-cols-4 gap-6">
+          <!-- Product 1 -->
+          <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col transition hover:shadow-md">
+            <div class="h-48 bg-gray-100 relative">
+              <img src="https://images.unsplash.com/photo-1556228578-0d85b1a4d571?auto=format&fit=crop&w=400&q=80" class="w-full h-full object-cover" alt="Cleanser">
+            </div>
+            <div class="p-5 flex-grow flex flex-col">
+              <span class="text-xs font-bold text-medical-600 uppercase tracking-wider mb-1">Cleanser</span>
+              <h4 class="font-bold text-gray-900 text-lg mb-2">Gentle Hydrating Cleanser</h4>
+              <p class="text-sm text-gray-600 mb-4 flex-grow">Non-foaming formula with ceramides.</p>
+              <div class="flex justify-between items-center mt-auto">
+                <span class="font-bold text-lg text-gray-900">$18.00</span>
+                <button class="bg-medical-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-medical-900 transition">Add</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Product 2 -->
+          <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col transition hover:shadow-md">
+            <div class="h-48 bg-gray-100 relative">
+              <img src="https://images.unsplash.com/photo-1620916566398-3911143ab7be?auto=format&fit=crop&w=400&q=80" class="w-full h-full object-cover" alt="Serum">
+            </div>
+            <div class="p-5 flex-grow flex flex-col">
+              <span class="text-xs font-bold text-medical-600 uppercase tracking-wider mb-1">Serum</span>
+              <h4 class="font-bold text-gray-900 text-lg mb-2">Vitamin C 15% Serum</h4>
+              <p class="text-sm text-gray-600 mb-4 flex-grow">Potent antioxidant serum for dark spots.</p>
+              <div class="flex justify-between items-center mt-auto">
+                <span class="font-bold text-lg text-gray-900">$34.00</span>
+                <button class="bg-medical-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-medical-900 transition">Add</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Product 3 -->
+          <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col transition hover:shadow-md">
+            <div class="h-48 bg-gray-100 relative">
+              <img src="https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?auto=format&fit=crop&w=400&q=80" class="w-full h-full object-cover" alt="Moisturizer">
+            </div>
+            <div class="p-5 flex-grow flex flex-col">
+              <span class="text-xs font-bold text-medical-600 uppercase tracking-wider mb-1">Moisturizer</span>
+              <h4 class="font-bold text-gray-900 text-lg mb-2">Barrier Repair Cream</h4>
+              <p class="text-sm text-gray-600 mb-4 flex-grow">Rich cream with squalane and lipids.</p>
+              <div class="flex justify-between items-center mt-auto">
+                <span class="font-bold text-lg text-gray-900">$26.00</span>
+                <button class="bg-medical-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-medical-900 transition">Add</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Product 4 -->
+          <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col transition hover:shadow-md">
+            <div class="h-48 bg-gray-100 relative">
+              <img src="https://images.unsplash.com/photo-1556228720-102773d73507?auto=format&fit=crop&w=400&q=80" class="w-full h-full object-cover" alt="Sunscreen">
+            </div>
+            <div class="p-5 flex-grow flex flex-col">
+              <span class="text-xs font-bold text-medical-600 uppercase tracking-wider mb-1">Protection</span>
+              <h4 class="font-bold text-gray-900 text-lg mb-2">Mineral SPF 50 Fluid</h4>
+              <p class="text-sm text-gray-600 mb-4 flex-grow">Broad-spectrum mineral sunscreen.</p>
+              <div class="flex justify-between items-center mt-auto">
+                <span class="font-bold text-lg text-gray-900">$22.00</span>
+                <button class="bg-medical-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-medical-900 transition">Add</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CONDITION LIBRARY INTERFACE -->
+      <section id="library" class="view-section py-12 px-4 max-w-6xl mx-auto">
+        <div class="mb-12 text-center">
+          <h3 class="text-4xl font-bold text-gray-900 mb-4">Dermatology Knowledge Base</h3>
+          <p class="text-gray-600 max-w-2xl mx-auto">Educate yourself on common skin conditions and fundamental skincare rules.</p>
+        </div>
+        <div class="grid md:grid-cols-3 gap-6">
+          <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition">
+            <h4 class="font-bold text-xl mb-2 text-medical-900">Acne Vulgaris</h4>
+            <p class="text-sm text-gray-600 mb-4">Caused by excess sebum, dead skin cells, and bacteria clogging hair follicles.</p>
+            <p class="text-sm bg-medical-50 text-medical-700 p-3 rounded-lg"><strong>Derm Advice:</strong> Do not pop pimples. Use Salicylic Acid.</p>
+          </div>
+          <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition">
+            <h4 class="font-bold text-xl mb-2 text-medical-900">Eczema (Atopic Dermatitis)</h4>
+            <p class="text-sm text-gray-600 mb-4">A genetic condition that makes your skin red, severely itchy, and disrupts the barrier.</p>
+            <p class="text-sm bg-medical-50 text-medical-700 p-3 rounded-lg"><strong>Derm Advice:</strong> Moisturize on damp skin. Avoid fragrances.</p>
+          </div>
+          <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition">
+            <h4 class="font-bold text-xl mb-2 text-medical-900">Hyperpigmentation</h4>
+            <p class="text-sm text-gray-600 mb-4">Dark patches resulting from excess melanin production due to sun damage or trauma.</p>
+            <p class="text-sm bg-medical-50 text-medical-700 p-3 rounded-lg"><strong>Derm Advice:</strong> SPF 50 is non-negotiable. Use Vitamin C.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- CONSULTATION INTERFACE -->
+      <section id="consultation" class="view-section py-12 px-4 max-w-5xl mx-auto">
+        <div class="bg-medical-900 text-white rounded-2xl p-8 md:p-12 shadow-xl flex flex-col md:flex-row gap-12 items-center">
+          <div class="md:w-1/2">
+            <h3 class="text-4xl font-bold mb-4">Book a Consultation</h3>
+            <p class="text-medical-100 mb-6 text-lg">Get personalized prescription treatments. Upload a photo of your skin concern for our doctors to review.</p>
+            <ul class="space-y-3 text-medical-100">
+              <li class="flex items-center"><span class="bg-medical-600 p-1 rounded-full mr-3">✓</span> Board-certified dermatologists</li>
+              <li class="flex items-center"><span class="bg-medical-600 p-1 rounded-full mr-3">✓</span> HIPAA compliant</li>
+            </ul>
+          </div>
+          <div class="md:w-1/2 w-full bg-white text-gray-800 rounded-xl p-8">
+            <form onsubmit="event.preventDefault(); alert('Consultation Request Submitted successfully!'); document.getElementById('consultForm').reset();" id="consultForm" class="space-y-5">
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-sm font-medium mb-1">First Name</label>
+                  <input type="text" required class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-medical-500 outline-none bg-gray-50">
+                </div>
+                <div>
+                  <label class="block text-sm font-medium mb-1">Last Name</label>
+                  <input type="text" required class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-medical-500 outline-none bg-gray-50">
+                </div>
+              </div>
+              <div>
+                <label class="block text-sm font-medium mb-1">Select Specialist</label>
+                <select class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-medical-500 outline-none bg-gray-50">
+                  <option>Dr. Sarah Jenkins (Acne/Rosacea)</option>
+                  <option>Dr. Marcus Chen (Anti-Aging/Eczema)</option>
+                  <option>Dr. Emily Rodriguez (Pigmentation)</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-medium mb-1">Upload Area Photo</label>
+                <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:bg-gray-50 transition cursor-pointer bg-gray-50">
+                  <input type="file" id="photoUpload" accept="image/*" class="hidden">
+                  <label for="photoUpload" class="cursor-pointer text-sm text-gray-500 flex flex-col items-center">
+                    <svg class="w-10 h-10 mb-2 text-medical-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                    <span id="fileName" class="font-medium">Click to upload a clear photo</span>
+                  </label>
+                </div>
+              </div>
+              <button type="submit" class="w-full bg-medical-600 text-white py-3.5 rounded-lg font-bold text-lg hover:bg-medical-900 transition shadow-md">Request Appointment</button>
+            </form>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <footer class="bg-gray-900 text-gray-400 py-6 text-center mt-auto border-t border-gray-800">
+      <p>&copy; 2026 DermaCare Technologies. All rights reserved.</p>
+    </footer>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
